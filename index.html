@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>男子校の文化祭の3手の作戦会議</title>
+  <style>
+    /* 全体スタイル */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      background-color: #1e1e2e;
+      color: #cdd6f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 10px;
+    }
+
+    /* ゲームコンテナ */
+    #game-container {
+      width: 100%;
+      max-width: 480px;
+      background-color: #313244;
+      border: 4px solid #45475a;
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ヘッダー情報エリア */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #181825;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .status-badge {
+      background-color: #45475a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: #f9e2af;
+    }
+
+    .timer-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #f38ba8;
+    }
+
+    .timer-bar-bg {
+      width: 80px;
+      height: 10px;
+      background-color: #45475a;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .timer-bar-fill {
+      height: 100%;
+      width: 100%;
+      background-color: #f38ba8;
+      transition: width 0.1s linear;
+    }
+
+    /* キャラクターステージ（図形描画） */
+    .stage {
+      height: 160px;
+      background-color: #181825;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      padding: 10px;
+      position: relative;
+      overflow: hidden;
+      border: 2px solid #45475a;
+    }
+
+    /* キャラクター：主人公（学ラン風） */
+    .char-boy {
+      width: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .char-boy .head {
+      width: 36px;
+      height: 36px;
+      background-color: #f9e2af;
+      border-radius: 50%;
+      border: 3px solid #89b4fa;
+      position: relative;
+    }
+
+    .char-boy .body {
+      width: 44px;
+      height: 60px;
+      background-color: #89b4fa;
+      border-radius: 8px 8px 0 0;
+      margin-top: 2px;
+    }
+
+    /* キャラクター：相手（セーラー風） */
+    .char-girl {
+      width: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .char-girl .head {
+      width: 36px;
+      height: 36px;
+      background-color: #f9e2af;
+      border-radius: 50%;
+      border: 3px solid #f5c2e7;
+      position: relative;
+    }
+
+    .char-girl .body {
+      width: 0;
+      height: 0;
+      border-left: 24px solid transparent;
+      border-right: 24px solid transparent;
+      border-bottom: 60px solid #f5c2e7;
+      margin-top: 2px;
+    }
+
+    /* 会話吹き出し */
+    .dialog-box {
+      background-color: #cdd6f4;
+      color: #11111b;
+      padding: 12px;
+      border-radius: 12px;
+      min-height: 80px;
+      font-size: 15px;
+      line-height: 1.4;
+      font-weight: bold;
+      border: 3px solid #89b4fa;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 4つの選択肢ボタン領域 */
+    .choices-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .choice-btn {
+      background-color: #45475a;
+      color: #cdd6f4;
+      border: 2px solid #585b70;
+      border-radius: 8px;
+      padding: 12px 8px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      transition: background-color 0.1s, transform 0.05s;
+    }
+
+    .choice-btn:active {
+      transform: scale(0.97);
+      background-color: #585b70;
+    }
+
+    .key-badge {
+      background-color: #1e1e2e;
+      color: #a6e3a1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      border: 1px solid #a6e3a1;
+    }
+
+    /* 全画面オーバーレイ（スタート・結果） */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(24, 24, 37, 0.95);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .overlay h1 {
+      font-size: 20px;
+      color: #89b4fa;
+      margin-bottom: 12px;
+    }
+
+    .overlay p {
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 16px;
+      color: #bac2de;
+    }
+
+    .action-btn {
+      background-color: #a6e3a1;
+      color: #11111b;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #74c7ec;
+    }
+
+    .action-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #74c7ec;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <!-- ヘッダー情報 -->
+  <div class="header">
+    <div id="turn-display" class="status-badge">1 / 20 手目</div>
+    <div id="level-display" class="status-badge">成功: 0回</div>
+    <div class="timer-container">
+      <span id="timer-text">残り 5秒</span>
+      <div class="timer-bar-bg">
+        <div id="timer-bar" class="timer-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ステージ（キャラクター表示） -->
+  <div class="stage">
+    <div class="char-boy">
+      <div class="head"></div>
+      <div class="body"></div>
+    </div>
+    <div class="char-girl">
+      <div class="head"></div>
+      <div class="body"></div>
+    </div>
+  </div>
+
+  <!-- セリフ表示エリア -->
+  <div id="dialog" class="dialog-box">
+    文化祭に好きな人を招待できた！20手の会話を繋いで付き合おう！
+  </div>
+
+  <!-- 4つの選択肢ボタン -->
+  <div class="choices-grid">
+    <button class="choice-btn" onclick="makeChoice(0)">
+      <span class="key-badge">[1] または [▲]</span>
+      <span id="choice-0-text">選択肢 1</span>
+    </button>
+    <button class="choice-btn" onclick="makeChoice(1)">
+      <span class="key-badge">[2] または [▼]</span>
+      <span id="choice-1-text">選択肢 2</span>
+    </button>
+    <button class="choice-btn" onclick="makeChoice(2)">
+      <span class="key-badge">[3] または [◄]</span>
+      <span id="choice-2-text">選択肢 3</span>
+    </button>
+    <button class="choice-btn" onclick="makeChoice(3)">
+      <span class="key-badge">[4] または [►]</span>
+      <span id="choice-3-text">選択肢 4</span>
+    </button>
+  </div>
+
+  <!-- オーバーレイ：スタート画面 -->
+  <div id="start-overlay" class="overlay">
+    <h1>男子校の文化祭の3手の作戦会議</h1>
+    <p>
+      全20ターンの会話を成功させて付き合おう！<br>
+      キーボードの <b>[1/2/3/4]</b> または <b>[矢印キー]</b>、<br>
+      または画面のボタンをタップしてセリフを選んでください。<br><br>
+      成功すると制限時間が短くなり難しくなります！
+    </p>
+    <button class="action-btn" onclick="startGame()">作戦を開始する</button>
+  </div>
+
+  <!-- オーバーレイ：結果画面 -->
+  <div id="result-overlay" class="overlay hidden">
+    <h1 id="result-title">作戦成功！</h1>
+    <p id="result-detail">無事に付き合うことができました！</p>
+    <button class="action-btn" onclick="restartGame()">もう一度遊ぶ</button>
+  </div>
+</div>
+
+<script>
+  // --- シナリオデータ（全20手、各4選択肢・正解インデックス指定） ---
+  const scenario = [
+    { dialog: "「来てくれてありがとう！男子校の文化祭、楽しんでる？」", choices: ["「最高の文化祭にするよ！」", "「つまらないかも…」", "「男子しかいないよ」", "「帰りたい？」"], correct: 0 },
+    { dialog: "「ううん、すごく賑やかで楽しいよ！次はどこ行く？」", choices: ["「迷子になっちゃった」", "「お化け屋敷なんてどう？」", "「どこでもいいよ」", "「一人で回ってきて」"], correct: 1 },
+    { dialog: "「お化け屋敷！ちょっと怖いけど入ってみようかな…！」", choices: ["「脅かしてあげる！」", "「僕が守るから安心して！」", "「入るのやめよう」", "「暗くて何も見えないね」"], correct: 1 },
+    { dialog: "「頼りにしてるね！キャッ、今何か動いた…！？」", choices: ["「走って逃げよう！」", "「ただの仕掛けだよ、大丈夫」", "「大声を出そう」", "「気のせいじゃない？」"], correct: 1 },
+    { dialog: "「ふぅ、無事に出られたね。ちょっとドキドキしちゃった。」", choices: ["「休憩にジュースでも買おうか」", "「全然怖くなかったね」", "「もう1回入る？」", "「疲れたから帰る？」"], correct: 0 },
+    { dialog: "「ありがとう！冷たいお茶おいしいな。何の模擬店がお勧め？」", choices: ["「僕たちが焼いた焼きそば！」", "「まずいパン屋さん」", "「売り切れの店」", "「何も食べない方がいい」"], correct: 0 },
+    { dialog: "「焼きそばいいね！じゃあ1つ買って分け合おうか？」", choices: ["「一人で全部食べる！」", "「うん、半分こしよう！」", "「いらない」", "「高いからやめよう」"], correct: 1 },
+    { dialog: "「美味しい！料理作れる人ってすごいな。」", choices: ["「実は家でも練習したんだ」", "「奇跡的に上手くいっただけ」", "「買ってきただけだよ」", "「別に凄くないよ」"], correct: 0 },
+    { dialog: "「そうなんだ！準備頑張ったんだね。感心しちゃった。」", choices: ["「君に楽しんでほしくて」", "「ただの課題だから」", "「サボりたかった」", "「クラスの奴らに頼まれた」"], correct: 0 },
+    { dialog: "「えっ…私 showcase のために…？嬉しいな…。」", choices: ["「当たり前じゃないか」", "「嘘だよ、冗談！」", "「次はステージ見に行こう」", "「眠くなってきた」"], correct: 2 },
+    { dialog: "「バンド演奏やってる！演奏してる姿かっこいいね！」", choices: ["「実は僕も後でギター弾くんだ」", "「僕の方が上手いよ」", "「うるさいだけじゃない？」", "「早く終わらないかな」"], correct: 0 },
+    { dialog: "「えっ本当に！？見たい！応援するね！」", choices: ["「緊張してきた…」", "「特等席で見ててね！」", "「見ないでほしいな」", "「期待しないで」"], correct: 1 },
+    { dialog: "「頑張って！一番前で応援してるからね！」", choices: ["「（心を込めて演奏する）」", "「（演奏をサボる）」", "「（歌詞を忘れる）」", "「（途中で逃げ出す）」"], correct: 0 },
+    { dialog: "「すごかったよ！ギター弾く姿、すごく輝いてた！」", choices: ["「君が見ててくれたからだよ」", "「まあ楽勝だったね」", "「指が痛いよ」", "「疲れたから休む」"], correct: 0 },
+    { dialog: "「もうすぐ文化祭も終わりだね…後夜祭始まるよ。」", choices: ["「最後の後夜祭、一緒に行こう」", "「じゃあここで解散ね」", "「早く帰ろう」", "「もう暗いから無理」"], correct: 0 },
+    { dialog: "「うん！グラウンドのキャンプファイヤー綺麗だね…。」", choices: ["「炎が熱いね」", "「君の方が綺麗だよ」", "「今日一日楽しかったね」", "「煙が目にしみる」"], correct: 2 },
+    { dialog: "「私もすごく楽しかった！招待してくれてありがとう。」", choices: ["「また来年も来よう」", "「伝えたいことがあるんだ」", "「じゃあバイバイ」", "「お腹減ったな」"], correct: 1 },
+    { dialog: "「伝えたいこと…？何かな…？（ドキドキ）」", choices: ["「ずっと好きでした」", "「宿題教えてほしい」", "「お金貸して」", "「ボタン取れそう」"], correct: 0 },
+    { dialog: "「えっ…！私と…付き合ってくれるの…！？」", choices: ["「これからもずっと隣にいたい」", "「冗談だよ！」", "「考えておいて」", "「友達としてね」"], correct: 0 },
+    { dialog: "「私も…あなたのことが好きです！よろしくお願いします！」", choices: ["「ありがとう！最高の文化祭だ！」", "「やっぱりやめる」", "「よっしゃー！」", "「ハイタッチしよう！」"], correct: 0 }
+  ];
+
+  // --- ゲーム状態管理 ---
+  let currentTurn = 0;
+  let successCount = 0;
+  let timeLeft = 0;
+  let maxTime = 5; // 初期持ち時間（秒）
+  let timerInterval = null;
+
+  // UI要素
+  const dialogEl = document.getElementById('dialog');
+  const turnDisplayEl = document.getElementById('turn-display');
+  const levelDisplayEl = document.getElementById('level-display');
+  const timerTextEl = document.getElementById('timer-text');
+  const timerBarEl = document.getElementById('timer-bar');
+  const startOverlayEl = document.getElementById('start-overlay');
+  const resultOverlayEl = document.getElementById('result-overlay');
+  const resultTitleEl = document.getElementById('result-title');
+  const resultDetailEl = document.getElementById('result-detail');
+
+  // キーボード操作の割り当て
+  window.addEventListener('keydown', (e) => {
+    if (!startOverlayEl.classList.contains('hidden') || !resultOverlayEl.classList.contains('hidden')) {
+      return;
+    }
+    if (e.key === '1' || e.key === 'ArrowUp') makeChoice(0);
+    if (e.key === '2' || e.key === 'ArrowDown') makeChoice(1);
+    if (e.key === '3' || e.key === 'ArrowLeft') makeChoice(2);
+    if (e.key === '4' || e.key === 'ArrowRight') makeChoice(3);
+  });
+
+  // スタート関数
+  function startGame() {
+    startOverlayEl.classList.add('hidden');
+    resultOverlayEl.classList.add('hidden');
+    currentTurn = 0;
+    updateTurnUI();
+  }
+
+  // ターン毎の表示更新
+  function updateTurnUI() {
+    if (currentTurn >= scenario.length) {
+      finishGame(true);
+      return;
+    }
+
+    const currentData = scenario[currentTurn];
+    dialogEl.textContent = currentData.dialog;
+    turnDisplayEl.textContent = `${currentTurn + 1} / ${scenario.length} 手目`;
+    levelDisplayEl.textContent = `成功: ${successCount}回`;
+
+    for (let i = 0; i < 4; i++) {
+      document.getElementById(`choice-${i}-text`).textContent = currentData.choices[i];
+    }
+
+    resetTimer();
+  }
+
+  // タイマー制御
+  function resetTimer() {
+    clearInterval(timerInterval);
+    // 成功回数に応じて制限時間を短縮（最小2秒）
+    maxTime = Math.max(2, 5 - Math.floor(successCount / 2));
+    timeLeft = maxTime;
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+      timeLeft -= 0.1;
+      if (timeLeft <= 0) {
+        timeLeft = 0;
+        clearInterval(timerInterval);
+        finishGame(false, "時間切れ！焦って失敗してしまった…");
+      }
+      updateTimerUI();
+    }, 100);
+  }
+
+  function updateTimerUI() {
+    timerTextEl.textContent = `残り ${Math.ceil(timeLeft)}秒`;
+    const percentage = (timeLeft / maxTime) * 100;
+    timerBarEl.style.width = `${percentage}%`;
+  }
+
+  // 選択肢を押した時の判定
+  function makeChoice(index) {
+    if (currentTurn >= scenario.length) return;
+
+    clearInterval(timerInterval);
+    const correctIndex = scenario[currentTurn].correct;
+
+    if (index === correctIndex) {
+      currentTurn++;
+      updateTurnUI();
+    } else {
+      finishGame(false, "間違えたセリフを選んでしまい、雰囲気が気まずくなった…");
+    }
+  }
+
+  // ゲーム終了（成功／失敗）
+  function finishGame(isSuccess, message = "") {
+    clearInterval(timerInterval);
+    resultOverlayEl.classList.remove('hidden');
+
+    if (isSuccess) {
+      successCount++;
+      resultTitleEl.textContent = "告白成功！";
+      resultTitleEl.style.color = "#a6e3a1";
+      resultDetailEl.textContent = `20手すべての選択に成功しました！付き合えて大成功です！（レベル上昇：次回制限時間が短くなります）`;
+    } else {
+      resultTitleEl.textContent = "作戦失敗…";
+      resultTitleEl.style.color = "#f38ba8";
+      resultDetailEl.textContent = message;
+    }
+  }
+
+  // 再挑戦（状態リセット）
+  function restartGame() {
+    startGame();
+  }
+</script>
+</body>
+</html>
